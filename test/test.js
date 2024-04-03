@@ -39,7 +39,7 @@ describe('Test number functions', () => {
     });
 
     it('number format test', () => {
-        assert.equal(formatNumber(12500), '12,500');
+        assert.equal(formatNumber(12500.214, 2), 12500.21);
     });
 });
 

@@ -1,6 +1,6 @@
 /* eslint-disable no-trailing-spaces */
 /* global HTMLElement */
-import { roundPoint, formatNumber } from './number';
+import { roundPoint, formatNumber, outputFormatter } from './number';
 import { createPath, createVerticalPath } from './path';
 import {
     generateLegendBackground, getDefaultColors, createSVGElement, setAttrs, removeAttrs
@@ -25,6 +25,7 @@ class FunnelGraph {
         this.width = options.width;
         this.subLabelValue = options.subLabelValue || 'percent';
         this.precision = options.precision || 2;
+        this.formatter = options.formatter || outputFormatter;
     }
 
     /**
@@ -178,7 +179,7 @@ class FunnelGraph {
             value.setAttribute('class', 'label__value');
 
             const valueNumber = this.is2d() ? this.getValues2d()[index] : this.values[index];
-            value.textContent = formatNumber(valueNumber, this.precision);
+            value.textContent = this.formatter(formatNumber(valueNumber, this.precision));
 
             const percentageValue = document.createElement('div');
             percentageValue.setAttribute('class', 'label__percentage');
@@ -200,7 +201,7 @@ class FunnelGraph {
                 this.subLabels.forEach((subLabel, j) => {
                     const subLabelDisplayValue = this.subLabelValue === 'percent'
                         ? `${twoDimPercentages[index][j]}%`
-                        : formatNumber(this.values[index][j], this.precision);
+                        : this.formatter(formatNumber(this.values[index][j], this.precision));
                     percentageList += `<li>${this.subLabels[j]}:
     <span class="percentage__list-label">${subLabelDisplayValue}</span>
  </li>`;
