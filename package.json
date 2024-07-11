@@ -46,13 +46,12 @@
     "gulp-eslint": "^5.0.0",
     "gulp-postcss": "^8.0.0",
     "gulp-rename": "^1.2.2",
-    "gulp-sass": "^4.0.2",
-    "gulp-sass-lint": "^1.4.0",
     "gulp-streamify": "^1.0.2",
     "gulp-uglify": "^3.0.2",
     "gulp-util": "^3.0.8",
     "mocha": "^5.2.0",
     "nyc": "^13.3.0",
     "vinyl-source-stream": "^2.0.0"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

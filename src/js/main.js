@@ -16,7 +16,8 @@ class FunnelGraph {
         this.direction = (options.direction && options.direction === 'vertical') ? 'vertical' : 'horizontal';
         this.labels = FunnelGraph.getLabels(options);
         this.subLabels = FunnelGraph.getSubLabels(options);
-        this.values = FunnelGraph.getValues(options);
+        this.labelValues = FunnelGraph.getLabelValues(options);
+        this.graphValues = FunnelGraph.getGraphValues(options);
         this.percentages = this.createPercentages();
         this.colors = options.data.colors || getDefaultColors(this.is2d() ? this.getSubDataSize() : 2);
         this.displayPercent = options.displayPercent || false;
@@ -103,8 +104,8 @@ class FunnelGraph {
         } else {
             // As you can see on the visualization above points #2 and #3 have the same cross axis coordinate
             // so we duplicate the last value
-            const max = Math.max(...this.values);
-            const values = [...this.values].concat([...this.values].pop());
+            const max = Math.max(...this.graphValues);
+            const values = [...this.graphValues].concat([...this.graphValues].pop());
             // if the graph is simple (not two-dimensional) then we have only paths "A" and "D"
             // which are symmetric. So we get the points for "A" and then get points for "D" by subtracting "A"
             // points from graph cross dimension length
@@ -116,7 +117,7 @@ class FunnelGraph {
     }
 
     getGraphType() {
-        return this.values && this.values[0] instanceof Array ? '2d' : 'normal';
+        return this.graphValues && this.graphValues[0] instanceof Array ? '2d' : 'normal';
     }
 
     is2d() {
@@ -128,11 +129,11 @@ class FunnelGraph {
     }
 
     getDataSize() {
-        return this.values.length;
+        return this.graphValues.length;
     }
 
     getSubDataSize() {
-        return this.values[0].length;
+        return this.graphValues[0].length;
     }
 
     getFullDimension() {
@@ -178,7 +179,7 @@ class FunnelGraph {
             const value = document.createElement('div');
             value.setAttribute('class', 'label__value');
 
-            const valueNumber = this.is2d() ? this.getValues2d()[index] : this.values[index];
+            const valueNumber = this.is2d() ? this.getValues2d(true)[index] : this.labelValues[index];
             value.textContent = this.formatter(formatNumber(valueNumber, this.precision));
 
             const percentageValue = document.createElement('div');
@@ -196,12 +197,12 @@ class FunnelGraph {
                 segmentPercentages.setAttribute('class', 'label__segment-percentages');
                 let percentageList = '<ul class="segment-percentage__list">';
 
-                const twoDimPercentages = this.getPercentages2d();
+                const twoDimPercentages = this.getPercentages2d(true);
 
                 this.subLabels.forEach((subLabel, j) => {
                     const subLabelDisplayValue = this.subLabelValue === 'percent'
                         ? `${twoDimPercentages[index][j]}%`
-                        : this.formatter(formatNumber(this.values[index][j], this.precision));
+                        : this.formatter(formatNumber(this.labelValues[index][j], this.precision));
                     percentageList += `<li>${this.subLabels[j]}:
     <span class="percentage__list-label">${subLabelDisplayValue}</span>
  </li>`;
@@ -264,8 +265,13 @@ class FunnelGraph {
         }
     }
 
-    setValues(v) {
-        this.values = v;
+    setLabelValues(v) {
+        this.labelValues = v;
+        return this;
+    }
+
+    setGraphValues(v) {
+        this.graphValues = v;
         return this;
     }
 
@@ -284,7 +290,7 @@ class FunnelGraph {
         return this;
     }
 
-    static getValues(options) {
+    static getLabelValues(options) {
         if (!options.data) {
             return [];
         }
@@ -292,26 +298,44 @@ class FunnelGraph {
         const { data } = options;
 
         if (typeof data === 'object') {
-            return data.values;
+            return data.labelValues || data.graphValues;
         }
 
         return [];
     }
 
-    getValues2d() {
+    static getGraphValues(options) {
+        if (!options.data) {
+            return [];
+        }
+
+        const { data } = options;
+
+        if (typeof data === 'object') {
+            return data.graphValues;
+        }
+
+        return [];
+    }
+
+    getValues2d(label = false) {
         const values = [];
 
-        this.values.forEach((valueSet) => {
+        const valuesToUse = label ? this.labelValues : this.graphValues;
+
+        valuesToUse.forEach((valueSet) => {
             values.push(valueSet.reduce((sum, value) => sum + value, 0));
         });
 
         return values;
     }
 
-    getPercentages2d() {
+    getPercentages2d(label = false) {
         const percentages = [];
 
-        this.values.forEach((valueSet) => {
+        const valuesToUse = label ? this.labelValues : this.graphValues;
+
+        valuesToUse.forEach((valueSet) => {
             const total = valueSet.reduce((sum, value) => sum + value, 0);
             percentages.push(valueSet.map(value => (total === 0 ? 0 : roundPoint(value * 100 / total))));
         });
@@ -323,9 +347,9 @@ class FunnelGraph {
         let values = [];
 
         if (this.is2d()) {
-            values = this.getValues2d();
+            values = this.getValues2d(true);
         } else {
-            values = [...this.values];
+            values = [...this.labelValues];
         }
 
         const max = Math.max(...values);
@@ -607,7 +631,8 @@ class FunnelGraph {
 
         this.labels = [];
         this.colors = getDefaultColors(this.is2d() ? this.getSubDataSize() : 2);
-        this.values = [];
+        this.labelValues = [];
+        this.graphValues = [];
         this.percentages = [];
 
         if (typeof d.labels !== 'undefined') {
@@ -616,13 +641,15 @@ class FunnelGraph {
         if (typeof d.colors !== 'undefined') {
             this.colors = d.colors || getDefaultColors(this.is2d() ? this.getSubDataSize() : 2);
         }
-        if (typeof d.values !== 'undefined') {
-            if (Object.prototype.toString.call(d.values[0]) !== Object.prototype.toString.call(this.values[0])) {
+        if (typeof d.graphValues !== 'undefined') {
+            if (Object.prototype.toString.call(d.graphValues[0]) !== Object.prototype.toString.call(this.graphValues[0])) {
                 this.container.querySelector('svg').remove();
-                this.values = FunnelGraph.getValues({ data: d });
+                this.labelValues = FunnelGraph.getLabelValues({ data: d });
+                this.graphValues = FunnelGraph.getGraphValues({ data: d });
                 this.makeSVG();
             } else {
-                this.values = FunnelGraph.getValues({ data: d });
+                this.labelValues = FunnelGraph.getLabelValues({ data: d });
+                this.graphValues = FunnelGraph.getGraphValues({ data: d });
             }
             this.drawPaths();
         }
