@@ -1,6 +1,6 @@
 {
   "name": "@helixdigital-io/funnel-graph-js",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "description": "SVG Funnel Graph Javascript Library",
   "main": "main.js",
   "scripts": {
